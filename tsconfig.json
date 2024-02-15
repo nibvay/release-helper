@@ -9,6 +9,7 @@
     "strict": true,
     "noImplicitAny": false,
     "skipLibCheck": true,
+    "moduleResolution": "node"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"],

@@ -53,3 +53,9 @@ checkVersion(versionFromCmd);
 const newContent = genNewChangelog(versionFromCmd);
 await fs.writeFileSync(CHANGELOG_FILE_PATH, newContent, "utf-8");
 
+async function executeNewVersion() {
+  console.log("execute new version");
+}
+
+export default executeNewVersion;
+
