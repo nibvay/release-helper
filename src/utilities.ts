@@ -1,19 +1,25 @@
+import { promises as fsp } from "fs";
 import fs from "fs";
 
-export const CHANGELOG_FILE_PATH = "./CHANGELOG.md";
-export const PACKAGE_JSON_FILE_PATH = "./package.json";
-export const PACKAGE_LOCK_JSON_FILE_PATH = "./package-lock.json";
-
 export async function readJson(path: string) {
-  return JSON.parse(await fs.promises.readFile(path, "utf-8"));
+  return JSON.parse(await fsp.readFile(path, "utf-8"));
 }
 
 export async function readFile(path: string) {
-  return await fs.readFileSync(path, "utf-8");
+  return await fsp.readFile(path, "utf-8");
 }
 
 export async function writeFile(path: string, newContent: string) {
-  await fs.writeFileSync(path, newContent, "utf-8");
+  await fsp.writeFile(path, newContent, "utf-8");
+}
+
+export async function checkFileExists(path: string) {
+  try {
+    await fsp.access(path, fs.constants.F_OK);
+    return true;
+  } catch(e) {
+    return false;
+  }
 }
 
 export function formatNextVersion(items: string[]) {
@@ -39,4 +45,3 @@ export function getIndexFromChangelog(changelogLines: string[]) {
     releasedIdx: changelogLines.findIndex((line) => line.includes("## Released")),
   };
 }
-

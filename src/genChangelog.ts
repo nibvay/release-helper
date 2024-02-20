@@ -65,7 +65,13 @@ function genNewChangelog({ title, originLines, toAdd, commitLink }: { title: str
     }
   });
 
-  const validToAdd = toAdd.filter(({ shortSha }) => !tempLine.has(shortSha)).map(({ shortSha, message }) => `  - ${message} ([#${shortSha}](${commitLink}${shortSha}))`);
+  const validToAdd = toAdd
+    .filter(({ shortSha }) => !tempLine.has(shortSha))
+    .map(({ shortSha, message }) => {
+      if (commitLink) return `  - ${message} ([#${shortSha}](${commitLink}${shortSha}))`;
+      return `  - ${message} [#${shortSha}]`;
+    });
+
   const newNextVersion = ([] as string[])
     .concat(nextVersionBlock.slice(0, latestRange.end))
     .concat(validToAdd)

@@ -51,7 +51,6 @@ async function executeNewVersion(options: Options) {
     compareVersions(currentVersion, inputVersion);
 
     const originLines = (await readFile(changelogFile)).split("\n");
-    console.log(originLines);
     const { nextVersionIdx, releasedIdx } = getIndexFromChangelog(originLines);
     const nextVersionObj = formatNextVersion(originLines.slice(nextVersionIdx, releasedIdx));
     if (Object.keys(nextVersionObj).includes(inputVersion)) throw new Error(`New version ${inputVersion} is already existed.`);

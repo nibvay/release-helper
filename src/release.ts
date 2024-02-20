@@ -1,27 +1,13 @@
-import fs from "fs";
-import {
-  CHANGELOG_FILE_PATH, CHANGELOG_TITLE, PACKAGE_JSON_FILE_PATH, PACKAGE_LOCK_JSON_FILE_PATH,
-  formatNextVersion, getIndexFromChangelog,
-} from "./utilities";
+import { Options } from "./types";
+import { readFile, writeFile, readJson, formatNextVersion, getIndexFromChangelog } from "./utilities";
 
-const origin = await fs.readFileSync(CHANGELOG_FILE_PATH, "utf-8");
-const originLines = origin.split("\n");
-const { nextVersionIdx, releasedIdx } = getIndexFromChangelog(originLines);
-const nextVersionObj = formatNextVersion(originLines.slice(nextVersionIdx, releasedIdx));
-
-function getReleaseVersion() {
-  const versions = Object.keys(nextVersionObj);
-  const versionFromCmd = process.argv[2];
-
-  if (versionFromCmd) {
-    if (!versions.includes(versionFromCmd)) throw new Error(`${versionFromCmd} is not in Next Version.`);
-    return versionFromCmd;
-  }
-
-  return versions[0];
-}
-
-function genNewChangelog(version: string) {
+function genNewChangelog({ 
+  version, 
+  nextVersionObj, 
+  originLines, 
+  releasedIdx, 
+  title,
+}: { version: string, nextVersionObj: formattedObj, originLines: string[], releasedIdx: number, title: string }) {
   const newReleased = ([] as string[])
     .concat(`* ${version}`)
     .concat(nextVersionObj[version])
@@ -35,7 +21,7 @@ function genNewChangelog(version: string) {
     newNextVersion.push(...nextVersionObj[v]);
   });
 
-  return `${CHANGELOG_TITLE}
+  return `${title}
 
 #### Next Version
 ${newNextVersion.join("\n")}
@@ -44,25 +30,60 @@ ${newReleased}
   `;
 }
 
-// 1. get the version to release
-const version = getReleaseVersion();
-console.log(`You are going to release ${version} ......`);
+async function executeRelease (options: Options) {
+  const {
+    title,
+    changelogFile,
+    release,
+  } = options;
+  try {
+    const originLines = (await readFile(changelogFile)).split("\n");
+    const { nextVersionIdx, releasedIdx } = getIndexFromChangelog(originLines);
+    const nextVersionObj = formatNextVersion(originLines.slice(nextVersionIdx, releasedIdx));
 
-// 2. move "Next Version" release item to "Released"
-const newContent = genNewChangelog(version);
-await fs.writeFileSync(CHANGELOG_FILE_PATH, newContent, "utf-8");
-console.log("* Update changelog success!");
+    // 1. get the version to release
+    let releaseVersion: string;
+    if (typeof release === "boolean") {
+      releaseVersion = Object.keys(nextVersionObj)[0];
+    } else {
+      if (!Object.keys(nextVersionObj).includes(release)) throw new Error(`${release} is not in Next Version.`);
+      releaseVersion = release;
+    }
+    console.log(`You are going to release ${releaseVersion} 📝📝📝`);
 
-// 3. bump package.json version
-const packageJsonFile = JSON.parse(await fs.promises.readFile(PACKAGE_JSON_FILE_PATH, "utf-8"));
-packageJsonFile.version = version.replace("v", "");
-const newJson = JSON.stringify(packageJsonFile, null, 2);
-await fs.writeFileSync(PACKAGE_JSON_FILE_PATH, newJson, "utf-8");
-console.log("* Update the package.json file.");
+    // 2. move "Next Version" release item to "Released"
+    const newContent = genNewChangelog({ 
+      version: releaseVersion, 
+      nextVersionObj,
+      originLines,
+      releasedIdx, 
+      title,
+    });
+    await writeFile(changelogFile, newContent);
+    console.log(`* Update ${changelogFile}.`);
 
-// 4. bump package-lock.json version
-const packageLockJsonFile = JSON.parse(await fs.promises.readFile(PACKAGE_LOCK_JSON_FILE_PATH, "utf-8"));
-packageLockJsonFile.version = version.replace("v", "");
-const newLockJson = JSON.stringify(packageLockJsonFile, null, 2);
-await fs.writeFileSync(PACKAGE_LOCK_JSON_FILE_PATH, newLockJson, "utf-8");
-console.log("* Update the package-lock.json file.");
+    // 3. bump package.json version
+    const packageJsonFile = await readJson("package.json");
+    packageJsonFile.version = releaseVersion.replace("v", "");
+    const newJson = JSON.stringify(packageJsonFile, null, 2);
+    await writeFile("package.json", newJson);
+    console.log("* Update the package.json file.");
+
+    // 4. bump package-lock.json version
+    const packageLockJsonFile = await readJson("package-lock.json");
+    packageLockJsonFile.version = releaseVersion.replace("v", "");
+    const newLockJson = JSON.stringify(packageLockJsonFile, null, 2);
+    await writeFile("package-lock.json", newLockJson);
+    console.log("* Update the package-lock.json file.");
+    console.log("Done 🎉");
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+type formattedObj = {
+  [index: string]: string[];
+}
+
+export default executeRelease;
