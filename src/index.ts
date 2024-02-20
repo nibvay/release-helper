@@ -1,4 +1,4 @@
-#! /usr/bin/env node
+#!/usr/bin/env npx ts-node --esm
 import figlet from "figlet";
 import run from "./run";
 

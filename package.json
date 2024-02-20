@@ -5,10 +5,11 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "release-helper": "./dist/index.js"
+    "release-helper": "dist/index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npx ts-node --esm src/index.ts",
     "build": "rm -rf dist && tsc",
     "gen-changelog": "node ./dist/index.js",
     "release": "node ./dist/release.js",

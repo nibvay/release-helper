@@ -1,18 +1,8 @@
-import fs from "fs";
 import { execFileSync } from "child_process";
-import { CHANGELOG_TITLE, COMMIT_ROUTES, PACKAGE_JSON_FILE_PATH, CHANGELOG_FILE_PATH, DELIMITER } from "./utilities.js";
+import { Options } from "./types";
+import { readJson, readFile, writeFile, getIndexFromChangelog } from "./utilities";
 
-async function getLatestReleasedVersion(): Promise<string> {
-  try {
-    const packageRawData = await fs.readFileSync(PACKAGE_JSON_FILE_PATH, "utf-8");
-    const { version } = JSON.parse(packageRawData);
-    if (version.length < 0) throw new Error("There is no version field in package.json");
-    return version;
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
-}
+const DELIMITER = "&";
 
 function purgeCommit(commit: Commit[]) {
   const validChangelogRegex = /^(feat:|fix:)/;
@@ -59,11 +49,9 @@ function getLatestRange(items: string[]) {
   return { start: matchIdx[0], end: matchIdx[1] };
 }
 
-function genNewChangelog({ origin, toAdd }: { origin: string, toAdd: Commit[] }) {
-  const originLines = origin.split("\n");
-  const nextVersionStartIdx = originLines.findIndex((line) => line.includes("#### Next Version"));
-  const releasedStartIdx = originLines.findIndex((line) => line.includes("## Released"));
-  const nextVersionBlock = originLines.slice(nextVersionStartIdx, releasedStartIdx);
+function genNewChangelog({ title, originLines, toAdd, commitLink }: { title: string, originLines: string[], toAdd: Commit[], commitLink: string }) {
+  const { nextVersionIdx, releasedIdx } = getIndexFromChangelog(originLines);
+  const nextVersionBlock = originLines.slice(nextVersionIdx, releasedIdx);
   const latestRange = getLatestRange(nextVersionBlock);
 
   const tempLine = new Map();
@@ -77,7 +65,7 @@ function genNewChangelog({ origin, toAdd }: { origin: string, toAdd: Commit[] })
     }
   });
 
-  const validToAdd = toAdd.filter(({ shortSha }) => !tempLine.has(shortSha)).map(({ shortSha, message }) => `  - ${message} ([#${shortSha}](${COMMIT_ROUTES}${shortSha}))`);
+  const validToAdd = toAdd.filter(({ shortSha }) => !tempLine.has(shortSha)).map(({ shortSha, message }) => `  - ${message} ([#${shortSha}](${commitLink}${shortSha}))`);
   const newNextVersion = ([] as string[])
     .concat(nextVersionBlock.slice(0, latestRange.end))
     .concat(validToAdd)
@@ -85,18 +73,37 @@ function genNewChangelog({ origin, toAdd }: { origin: string, toAdd: Commit[] })
     .concat(nextVersionBlock.slice(latestRange.end + 1))
     .join("\n");
 
-  return `${CHANGELOG_TITLE}
+  return `${title}
 
 ${newNextVersion}
-${originLines.slice(releasedStartIdx).join("\n")}
+${originLines.slice(releasedIdx).join("\n")}
   `;
 }
 
-const latestReleasedVersion = await getLatestReleasedVersion();
-const toAddChangelog = genToAddChangelog(latestReleasedVersion);
-const origin = await fs.readFileSync(CHANGELOG_FILE_PATH, "utf-8");
-const newContent = genNewChangelog({ origin, toAdd: toAddChangelog });
-await fs.writeFileSync(CHANGELOG_FILE_PATH, newContent, "utf-8");
-console.log("Add changelog success!");
+async function executeGenChangelog(options: Options) {
+  const {
+    title,
+    changelogFile,
+    commitLink
+  } = options;
+  try {
+    const { version } = await readJson("package.json");
+    if (version.length < 0) throw new Error("There is no version field in package.json");
+    const originLines = (await readFile(changelogFile)).split("\n");
+    const newContent = genNewChangelog({
+      title,
+      originLines,
+      toAdd: genToAddChangelog(version),
+      commitLink,
+    });
+    await writeFile(changelogFile, newContent);
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+
+}
 
 type Commit = { shortSha: string, tag: string, message: string };
+
+export default executeGenChangelog;

@@ -2,7 +2,7 @@ import fs from "fs";
 import {
   CHANGELOG_FILE_PATH, CHANGELOG_TITLE, PACKAGE_JSON_FILE_PATH, PACKAGE_LOCK_JSON_FILE_PATH,
   formatNextVersion, getIndexFromChangelog,
-} from "./utilities.js";
+} from "./utilities";
 
 const origin = await fs.readFileSync(CHANGELOG_FILE_PATH, "utf-8");
 const originLines = origin.split("\n");

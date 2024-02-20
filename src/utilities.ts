@@ -1,13 +1,20 @@
-export const CHANGELOG_TITLE = "# Project Changelog";
-export const COMMIT_ROUTES = "https://gitlab.gogoro.com/enop-plus/gnop-app/-/commit/";
+import fs from "fs";
+
 export const CHANGELOG_FILE_PATH = "./CHANGELOG.md";
 export const PACKAGE_JSON_FILE_PATH = "./package.json";
 export const PACKAGE_LOCK_JSON_FILE_PATH = "./package-lock.json";
-export const DELIMITER = "&";
-// console.log(process.cwd());
-// export const DEFAULT_OPTIONS = {
-//   output: "CHANGELOG.md",
-// };
+
+export async function readJson(path: string) {
+  return JSON.parse(await fs.promises.readFile(path, "utf-8"));
+}
+
+export async function readFile(path: string) {
+  return await fs.readFileSync(path, "utf-8");
+}
+
+export async function writeFile(path: string, newContent: string) {
+  await fs.writeFileSync(path, newContent, "utf-8");
+}
 
 export function formatNextVersion(items: string[]) {
   const formatted = {};

@@ -1,8 +1,14 @@
 import { Command } from "commander";
+import { readJson } from "./utilities";
+import { Options } from "./types";
 import executeNewVersion from "./newVersion";
+import executeGenChangelog from "./genChangelog";
 
+const DEFAULT_OPTIONS = {
+  userConfig: ".release-helper.json"
+};
 
-function initCommand(argv) {
+async function constructOptions(argv): Promise<Options> {
   const program = new Command();
   program
     .option("-n, --new <version>", "New version")
@@ -12,19 +18,22 @@ function initCommand(argv) {
     .version("1.0.0")
     .parse(argv);
   const options = program.opts();
+  const userConfig = await readJson(DEFAULT_OPTIONS.userConfig);
   return {
-    ...options
+    ...options,
+    ...userConfig,
   };
 }
 
 async function run(argv) {
-  const cmdOptions = initCommand(argv);
-  console.log(cmdOptions);
+  const options = await constructOptions(argv);
+  console.log(options);
 
-  if (cmdOptions.new) {
-    await executeNewVersion();
+  if (options.new) {
+    await executeNewVersion(options);
+  } else if (options.genChangelog) {
+    await executeGenChangelog(options);
   }
-
 }
 
 export default run;
