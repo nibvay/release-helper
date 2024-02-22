@@ -71,4 +71,3 @@ async function executeNewVersion(options: Options) {
 }
 
 export default executeNewVersion;
-

@@ -107,7 +107,6 @@ async function executeGenChangelog(options: Options) {
     console.log(e);
     throw e;
   }
-
 }
 
 type Commit = { shortSha: string, tag: string, message: string };
