@@ -9,15 +9,16 @@ const USER_CONFIG_FILE = ".release-helper.json";
 const DEFAULT_OPTIONS = {
   title: "# Project Changelog",
   changelogFile: "CHANGELOG.md",
+  commitRegex: /^(feat:|fix:|JIRA-)/,
 };
 
 async function constructOptions(argv: string[], appVersion: string): Promise<Options> {
   const program = new Command();
   program
-    .option("-n, --new <version>", "New version")
-    .option("-release, --release [version]", "Release version")
-    .option("-gen-changelog, --gen-changelog", "Auto generate changelog based on organized commit messages")
-    .description("A tool for release version and update changelog")
+    .option("-n, --new <version>", "Create a new version.")
+    .option("-release, --release [version]", "Release a version.")
+    .option("-gen-changelog, --gen-changelog", "Generate changelog based on organized commit messages.")
+    .description("A tool for release version and update changelog. You can customize some configurations by creating a ./release-helper.json file")
     .version(appVersion)
     .parse(argv);
   const options = program.opts();

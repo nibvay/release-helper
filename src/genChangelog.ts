@@ -4,10 +4,9 @@ import { readJson, readFile, writeFile, getIndexFromChangelog } from "./utilitie
 
 const DELIMITER = "&";
 
-function purgeCommit(commit: Commit[]) {
-  const validChangelogRegex = /^(feat:|fix:)/;
+function purgeCommit(commit: Commit[], commitRegex: RegExp) {
   return commit.filter((com) => {
-    if (validChangelogRegex.test(com.message)) return com;
+    if (commitRegex.test(com.message)) return com;
   });
 }
 
@@ -15,7 +14,7 @@ function decomposeVersion(version: string) {
   return version.replace("v", "").split(".");
 }
 
-function genToAddChangelog(version: string) {
+function genToAddChangelog(version: string, commitRegex: RegExp) {
   const command = [
     "log",
     `--pretty=format:%h${DELIMITER}%d${DELIMITER}%s`,
@@ -34,7 +33,7 @@ function genToAddChangelog(version: string) {
     }
   });
 
-  return purgeCommit(toAdd);
+  return purgeCommit(toAdd, commitRegex);
 }
 
 function getLatestRange(items: string[]) {
@@ -90,7 +89,8 @@ async function executeGenChangelog(options: Options) {
   const {
     title,
     changelogFile,
-    commitLink
+    commitLink,
+    commitRegex,
   } = options;
   try {
     const { version } = await readJson("package.json");
@@ -99,7 +99,7 @@ async function executeGenChangelog(options: Options) {
     const newContent = genNewChangelog({
       title,
       originLines,
-      toAdd: genToAddChangelog(version),
+      toAdd: genToAddChangelog(version, commitRegex),
       commitLink,
     });
     await writeFile(changelogFile, newContent);
