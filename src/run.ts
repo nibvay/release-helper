@@ -31,23 +31,18 @@ async function constructOptions(argv: string[], appVersion: string): Promise<Opt
 }
 
 async function run(argv: string[]) {
-  try {
-    // preCheck
-    const { version } = await readJson("package.json");
-    const options = await constructOptions(argv, version);
-    // console.log(options);
-    if (!checkFileExists(options.changelogFile)) throw new Error("Please create a CHANGELOG.md file.");
-  
-    if (options.new) {
-      await executeNewVersion(options);
-    } else if (options.genChangelog) {
-      await executeGenChangelog(options);
-    } else if (options.release) {
-      await executeRelease(options);
-    }
-  } catch (e) {
-    console.log(e);
-    throw e;
+  // preCheck
+  const { version } = await readJson("package.json");
+  const options = await constructOptions(argv, version);
+  // console.log(options);
+  if (!checkFileExists(options.changelogFile)) throw new Error("Please create a CHANGELOG.md file.");
+
+  if (options.new) {
+    await executeNewVersion(options);
+  } else if (options.genChangelog) {
+    await executeGenChangelog(options);
+  } else if (options.release) {
+    await executeRelease(options);
   }
 }
 

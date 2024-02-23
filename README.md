@@ -44,3 +44,6 @@ You can customize some configurations by creating a ./release-helper.json file.
     ```
 3. The version to be released will be moved from the `Next Version` block to the `Released` block.
 4. Bump version for `package.json` and `package-lock.json`.
+
+## Reference
+* https://github.com/cookpete/auto-changelog

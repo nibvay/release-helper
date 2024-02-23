@@ -48,7 +48,9 @@ function getLatestRange(items: string[]) {
   return { start: matchIdx[0], end: matchIdx[1] };
 }
 
-function genNewChangelog({ title, originLines, toAdd, commitLink }: { title: string, originLines: string[], toAdd: Commit[], commitLink: string }) {
+function genNewChangelog({
+  title, originLines, toAdd, commitLink
+}: { title: string, originLines: string[], toAdd: Commit[], commitLink: string }) {
   const { nextVersionIdx, releasedIdx } = getIndexFromChangelog(originLines);
   const nextVersionBlock = originLines.slice(nextVersionIdx, releasedIdx);
   const latestRange = getLatestRange(nextVersionBlock);
@@ -78,11 +80,12 @@ function genNewChangelog({ title, originLines, toAdd, commitLink }: { title: str
     .concat(nextVersionBlock.slice(latestRange.end + 1))
     .join("\n");
 
+  console.log({ originLines, releasedIdx });
   return `${title}
 
 ${newNextVersion}
-${originLines.slice(releasedIdx).join("\n")}
-  `;
+${originLines.slice(releasedIdx).filter((v) => v !== "").join("\n")}
+`;
 }
 
 async function executeGenChangelog(options: Options) {
@@ -92,21 +95,17 @@ async function executeGenChangelog(options: Options) {
     commitLink,
     commitRegex,
   } = options;
-  try {
-    const { version } = await readJson("package.json");
-    if (version.length < 0) throw new Error("There is no version field in package.json");
-    const originLines = (await readFile(changelogFile)).split("\n");
-    const newContent = genNewChangelog({
-      title,
-      originLines,
-      toAdd: genToAddChangelog(version, commitRegex),
-      commitLink,
-    });
-    await writeFile(changelogFile, newContent);
-  } catch (e) {
-    console.log(e);
-    throw e;
-  }
+  const { version } = await readJson("package.json");
+  if (version.length < 0) throw new Error("There is no version field in package.json");
+  const originLines = (await readFile(changelogFile)).split("\n");
+  const newContent = genNewChangelog({
+    title,
+    originLines,
+    toAdd: genToAddChangelog(version, commitRegex),
+    commitLink,
+  });
+  await writeFile(changelogFile, newContent);
+  console.log(`* Update ${changelogFile}.`);
 }
 
 type Commit = { shortSha: string, tag: string, message: string };

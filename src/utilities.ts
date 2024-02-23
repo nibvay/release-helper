@@ -17,7 +17,7 @@ export async function checkFileExists(path: string) {
   try {
     await fsp.access(path, fs.constants.F_OK);
     return true;
-  } catch(e) {
+  } catch (e) {
     return false;
   }
 }
@@ -40,8 +40,8 @@ export function formatNextVersion(items: string[]) {
 }
 
 export function getIndexFromChangelog(changelogLines: string[]) {
-  return { 
-    nextVersionIdx: changelogLines.findIndex((line) => line.includes("#### Next Version")), 
+  return {
+    nextVersionIdx: changelogLines.findIndex((line) => line.includes("#### Next Version")),
     releasedIdx: changelogLines.findIndex((line) => line.includes("## Released")),
   };
 }
